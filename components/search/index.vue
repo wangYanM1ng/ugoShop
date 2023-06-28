@@ -4,7 +4,7 @@
 
 		<!-- 搜索框 -->
 		<view class="input-wrap">
-			<input type="text" @focus="focus" placeholder="keyword">
+			<input type="text" @focus="focus" :placeholder="keyword">
 			<span class="cancle" @tap="cancel">取消</span>
 		</view>
 

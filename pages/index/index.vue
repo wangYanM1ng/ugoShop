@@ -12,95 +12,28 @@
 					</swiper-item>
 				</swiper>
 
-
 				<!-- 导航区 -->
 				<view class="nav">
-					<navigator url="">
-						<image src="../../static/uploads/icon_index_nav_1@2x.png" />
-					</navigator>
-					<navigator url="">
-						<image src="../../static/uploads/icon_index_nav_2@2x.png" />
-					</navigator>
-					<navigator url="">
-						<image src="../../static/uploads/icon_index_nav_3@2x.png" />
-					</navigator>
-					<navigator url="">
-						<image src="../../static/uploads/icon_index_nav_4@2x.png" />
+					<navigator url="" v-for="(item,index) in navList" :key="item.name">
+						<image :src="item.image_src" />
 					</navigator>
 				</view>
-
 
 				<!-- 楼层数据 -->
 				<view class="floors">
-					<view class="floor">
+					<view class="floor" v-for="(item,index) in floorList" :key="index">
 						<view class="title">
-							<image src="../../static/uploads/pic_floor01_title.png" />
+							<image :src="item.floor_title.image_src" />
 						</view>
 						<view class="imgs">
-							<navigator url="" class="item">
-								<image src="../../static/uploads/pic_floor01_1@2x.png" />
-							</navigator>
-							<navigator url="" class="item">
-								<image src="../../static/uploads/pic_floor01_2@2x.png" />
-							</navigator>
-							<navigator url="" class="item">
-								<image src="../../static/uploads/pic_floor01_3@2x.png" />
-							</navigator>
-							<navigator url="" class="item">
-								<image src="../../static/uploads/pic_floor01_4@2x.png" />
-							</navigator>
-							<navigator url="" class="item">
-								<image src="../../static/uploads/pic_floor01_5@2x.png" />
-							</navigator>
-						</view>
-					</view>
-
-
-					<view class="floor">
-						<view class="title">
-							<image src="../../static/uploads/pic_floor02_title.png" />
-						</view>
-						<view class="imgs">
-							<navigator url="" class="item">
-								<image src="../../static/uploads/pic_floor02_1@2x.png" />
-							</navigator>
-							<navigator url="" class="item">
-								<image src="../../static/uploads/pic_floor02_2@2x.png" />
-							</navigator>
-							<navigator url="" class="item">
-								<image src="../../static/uploads/pic_floor02_3@2x.png" />
-							</navigator>
-							<navigator url="" class="item">
-								<image src="../../static/uploads/pic_floor02_4@2x.png" />
-							</navigator>
-							<navigator url="" class="item">
-								<image src="../../static/uploads/pic_floor02_5@2x.png" />
-							</navigator>
-						</view>
-					</view>
-					<view class="floor">
-						<view class="title">
-							<image src="../../static/uploads/pic_floor03_title.png" />
-						</view>
-						<view class="imgs">
-							<navigator url="" class="item">
-								<image src="../../static/uploads/pic_floor03_1@2x.png" />
-							</navigator>
-							<navigator url="" class="item">
-								<image src="../../static/uploads/pic_floor03_2@2x.png" />
-							</navigator>
-							<navigator url="" class="item">
-								<image src="../../static/uploads/pic_floor03_3@2x.png" />
-							</navigator>
-							<navigator url="" class="item">
-								<image src="../../static/uploads/pic_floor03_4@2x.png" />
-							</navigator>
-							<navigator url="" class="item">
-								<image src="../../static/uploads/pic_floor03_5@2x.png" />
+							<navigator url="" class="item" v-for="(el,index) in item.product_list">
+								<image :src="el.image_src" />
 							</navigator>
 						</view>
 					</view>
 				</view>
+				<!-- 回到顶部 -->
+				<view class="goTop icon-top" v-show="goTopShow" @tap="goTop"></view>
 			</view>
 		</template>
 	</view>
@@ -112,11 +45,16 @@
 		data() {
 			return {
 				title: 'Hello',
-				imgList: []
+				imgList: [],
+				navList: [],
+				floorList: [],
+				goTopShow: false
 			}
 		},
 		onLoad() {
 			this.getBannerList()
+			this.getNavList()
+			this.getFloorList()
 		},
 		components: {
 			search
@@ -124,14 +62,43 @@
 		methods: {
 			// 获取轮播数据接口
 			async getBannerList() {
-				// 请求后端接口
-				const res = await uni.request({
-					url: 'https://api-hmugo-web.itheima.net/api/public/v1/home/swiperdata'
+				const data = await this.$request({
+					url: '/home/swiperdata'
 				});
-				console.log(res.data);
 				// 更新初始数据
-				this.imgList = res.data.message;
+				this.imgList = data.message;
 			},
+			// 获取导航数据接口
+			async getNavList() {
+				const res = await this.$request({
+					url: '/home/catitems'
+				})
+				console.log(res);
+				this.navList = res.message
+			},
+			// 获取楼层数据接口
+			async getFloorList() {
+				const res = await this.$request({
+					url: '/home/floordata'
+				})
+				console.log(res);
+				this.floorList = res.message
+			},
+			//下拉刷新
+			async onPullDownRefresh() {
+				await Promise.all([this.getBannerList(), this.getNavList(), this.getFloorList()])
+				uni.stopPullDownRefresh()
+			},
+			//回到顶部的显隐
+			onPageScroll(e) {
+				this.goTopShow = e.scrollTop > 300
+			},
+			//点击回到顶部
+			goTop() {
+				uni.pageScrollTo({
+					scrollTop: 0
+				})
+			}
 		}
 	}
 </script>
@@ -164,6 +131,25 @@
 	}
 </style>
 <style lang="less">
+	.goTop {
+		position: fixed;
+		bottom: 30rpx;
+		/* #ifdef H5 */
+		bottom: 65px;
+		/* #endif */
+		right: 30rpx;
+
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		width: 100rpx;
+		height: 100rpx;
+		font-size: 48rpx;
+		color: #666;
+		border-radius: 50%;
+		background-color: rgba(255, 255, 255, 0.8);
+	}
+
 	.swiper {
 		height: 340rpx;
 
